@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+    <title>Calendar</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Now Calendar</h1>
+        <div id="calendar"></div>
+        <a href="/welcome"><button>Back to Welcome Page</button></a>
+        
+        <!-- D-Day 알리미 -->
+        <div id="dday">
+            <h2>D-Day 알리미</h2>
+            <p>D-Day까지 남은 일: <span id="days-left">Calculating...</span>일</p>
+        </div>
+
+        <!-- 날짜 설정 폼 -->
+        <form id="set-dday-form">
+            <label for="year">연도: </label>
+            <input type="number" id="year" min="1900" max="2100" required>
+            <label for="month">월: </label>
+            <input type="number" id="month" min="1" max="12" required>
+            <label for="day">일: </label>
+            <input type="number" id="day" min="1" max="31" required>
+            <label for="title">제목: </label>
+            <input type="text" id="title" required>
+            <label for="description">설명: </label>
+            <textarea id="description" required></textarea>
+            <button type="submit">D-Day 설정</button>
+        </form>
+
+        <h2>Saved Dates</h2>
+        <ul>
+            {% for date_info in saved_dates %}
+                <li>
+                    {{ date_info.date }} - {{ date_info.title }}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <script>
+        const calendarDiv = document.getElementById('calendar');
+        const today = new Date();
+        const month = today.toLocaleString('default', { month: 'long' });
+        const year = today.getFullYear();
+
+        calendarDiv.innerHTML = `<h2>${month} ${year}</h2>`;
+
+        const daysInMonth = new Date(year, today.getMonth() + 1, 0).getDate();
+        let calendarHTML = '<table><tr>';
+        for (let day = 1; day <= daysInMonth; day++) {
+            calendarHTML += `<td>${day}</td>`;
+            if (day % 7 === 0) calendarHTML += '</tr><tr>';
+        }
+        calendarHTML += '</tr></table>';
+        calendarDiv.innerHTML += calendarHTML;
+
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        // D-Day 정보가 변경될 때마다 UI 업데이트
+        socket.on('dday_update', function(data) {
+            var days = data.days;
+            var seconds = data.seconds;
+            var hours = Math.floor(seconds / 3600);
+            var minutes = Math.floor((seconds % 3600) / 60);
+            var seconds = seconds % 60;
+
+            document.getElementById('days-left').innerText = `${days}일 ${hours}시간 ${minutes}분 ${seconds}초`;
+        });
+
+        // D-Day 설정 폼 제출 시 서버에 데이터 보내기
+        document.getElementById('set-dday-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            var year = document.getElementById('year').value;
+            var month = document.getElementById('month').value;
+            var day = document.getElementById('day').value;
+            var title = document.getElementById('title').value;
+            var description = document.getElementById('description').value;
+
+            fetch('/set_dday', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `year=${year}&month=${month}&day=${day}&title=${title}&description=${description}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('D-Day가 설정되었습니다: ' + data.new_dday);
+                    // Saved Dates 리스트를 업데이트
+                    const savedDatesList = document.querySelector('ul');
+                    const newDateItem = document.createElement('li');
+                    newDateItem.textContent = `${data.new_dday} - ${title}`;
+                    savedDatesList.appendChild(newDateItem);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
