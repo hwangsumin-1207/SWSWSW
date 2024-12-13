@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/style.css">
+    <title>Calendar</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Your Calendar</h1>
+        <div id="calendar"></div>
+        <a href="/welcome"><button>Back to Welcome Page</button></a>
+        <form action="/save_date" method="POST">
+            <label for="date">Select a date to save:</label>
+            <input type="date" name="date" required>
+            <button type="submit">Save Date</button>
+        </form>
+        <h2>Saved Dates</h2>
+        <ul>
+            {% for date in saved_dates %}
+                <li>{{ date }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <script>
+        // 간단한 JavaScript 캘린더
+        const calendarDiv = document.getElementById('calendar');
+        const today = new Date();
+        const month = today.toLocaleString('default', { month: 'long' });
+        const year = today.getFullYear();
+        
+        calendarDiv.innerHTML = `<h2>${month} ${year}</h2>`;
+        
+        const daysInMonth = new Date(year, today.getMonth() + 1, 0).getDate();
+        let calendarHTML = '<table><tr>';
+        for (let day = 1; day <= daysInMonth; day++) {
+            calendarHTML += `<td>${day}</td>`;
+            if (day % 7 === 0) calendarHTML += '</tr><tr>';
+        }
+        calendarHTML += '</tr></table>';
+        calendarDiv.innerHTML += calendarHTML;
+    </script>
+</body>
+</html>
