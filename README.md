@@ -8,9 +8,9 @@ PostgreSQL
 CREATE DATABASE calendar_db; 입력
 
 터미널에서 모듈 설치 필요
-pip install flask
-pip install flask flask-socketio
-pip install psycopg2 flask-socketio
+pip install flask/
+pip install flask flask-socketio/
+pip install psycopg2 flask-socketio/
 
 
 실행 시 User Account 목록이뜸.
